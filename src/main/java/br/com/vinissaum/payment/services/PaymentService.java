@@ -9,10 +9,12 @@ import br.com.vinissaum.payment.services.exceptions.ResourceNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.List;
 
 @Service
 public class PaymentService {
@@ -27,10 +29,10 @@ public class PaymentService {
         this.modelMapper = modelMapper;
     }
 
-    public List<PaymentDTO> findAll() {
-        List<Payment> payments = repository.findAll();
+    public Page<PaymentDTO> findAll(Pageable pageable) {
+        Page<Payment> payments = repository.findAll(pageable);
 
-        return payments.stream().map(payment -> modelMapper.map(payment, PaymentDTO.class)).toList();
+        return new PageImpl<>(payments.stream().map(payment -> modelMapper.map(payment, PaymentDTO.class)).toList());
     }
 
     public PaymentDTO findById(Long id) {
