@@ -1,14 +1,16 @@
 package br.com.vinissaum.payment.services;
 
 import br.com.vinissaum.payment.dto.PaymentDTO;
+import br.com.vinissaum.payment.mapper.PaymentMapper;
 import br.com.vinissaum.payment.model.Payment;
 import br.com.vinissaum.payment.model.Status;
 import br.com.vinissaum.payment.repositories.PaymentRepository;
 import br.com.vinissaum.payment.services.exceptions.DatabaseException;
 import br.com.vinissaum.payment.services.exceptions.ResourceNotFoundException;
-import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -21,18 +23,18 @@ public class PaymentService {
 
     private PaymentRepository repository;
 
-    private ModelMapper modelMapper;
+    private PaymentMapper paymentMapper;
 
     @Autowired
-    public PaymentService(PaymentRepository repository, ModelMapper modelMapper) {
+    public PaymentService(PaymentRepository repository, PaymentMapper paymentMapper) {
         this.repository = repository;
-        this.modelMapper = modelMapper;
+        this.paymentMapper = paymentMapper;
     }
 
     public Page<PaymentDTO> findAll(Pageable pageable) {
         Page<Payment> payments = repository.findAll(pageable);
 
-        return new PageImpl<>(payments.stream().map(payment -> modelMapper.map(payment, PaymentDTO.class)).toList());
+        return new PageImpl<>(payments.stream().map(payment -> paymentMapper.toDto(payment)).toList());
     }
 
     public PaymentDTO findById(Long id) {
@@ -40,30 +42,31 @@ public class PaymentService {
                 () -> new ResourceNotFoundException(String.format("Payment id: %s not found", id)) //
         );
 
-        return modelMapper.map(payment, PaymentDTO.class);
+        return paymentMapper.toDto(payment);
     }
 
     public PaymentDTO createPayment(PaymentDTO dto) {
-        Payment payment = modelMapper.map(dto, Payment.class);
+        Payment payment = paymentMapper.toEntity(dto);
         payment.setStatus(Status.CREATED);
 
-        Payment entity = repository.save(payment);
+        payment = repository.save(payment);
 
-        return modelMapper.map(entity, PaymentDTO.class);
+        return paymentMapper.toDto(payment);
     }
 
     public PaymentDTO updatePayment(Long  id, PaymentDTO dto) {
-        Payment payment = modelMapper.map(dto, Payment.class);
+        Payment payment = repository.getReferenceById(id);
 
-        Payment entity = repository.save(payment);
+        BeanUtils.copyProperties(dto, payment, "id");
+        payment = repository.save(payment);
 
-        return modelMapper.map(entity, PaymentDTO.class);
+        return paymentMapper.toDto(payment);
     }
 
     public void deletePayment(Long id) {
         try {
             repository.deleteById(id);
-        } catch (EntityNotFoundException e) {
+        } catch (EmptyResultDataAccessException | EntityNotFoundException e) {
             throw new ResourceNotFoundException(String.format("Payment id: %s not found", id));
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Integrity violation: " + e.getMessage());
