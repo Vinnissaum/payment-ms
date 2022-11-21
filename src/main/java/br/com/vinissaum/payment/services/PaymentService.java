@@ -91,4 +91,14 @@ public class PaymentService {
         orderClient.updatePayment(payment.getOrderId());
     }
 
+    public void changeStatus(Long id) {
+        Optional<Payment> optionalPayment = repository.findById(id);
+
+        Payment payment = optionalPayment.orElseThrow(() -> new ResourceNotFoundException(String.format
+                ("Payment id: %s was not found", id)
+        ));
+
+        payment.setStatus(Status.CONFIRMED_WAITING_INTEGRATION);
+        repository.save(payment);
+    }
 }

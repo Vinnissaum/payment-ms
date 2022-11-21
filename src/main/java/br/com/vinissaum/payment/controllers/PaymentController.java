@@ -2,6 +2,7 @@ package br.com.vinissaum.payment.controllers;
 
 import br.com.vinissaum.payment.dto.PaymentDTO;
 import br.com.vinissaum.payment.services.PaymentService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -62,10 +63,13 @@ public class PaymentController {
     }
 
     @PatchMapping("/{id}/approve")
-    public ResponseEntity<Void> approvePayment(@PathVariable Long id) {
+    @CircuitBreaker(name = "updateOrder", fallbackMethod = "updateOrderWaitingIntegration")
+    public void approvePayment(@PathVariable Long id) {
         service.approvePayment(id);
+    }
 
-        return ResponseEntity.ok().build();
+    public void updateOrderWaitingIntegration(Long id, Exception e) {
+        service.changeStatus(id);
     }
 
 }

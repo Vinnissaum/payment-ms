@@ -3,5 +3,6 @@ package br.com.vinissaum.payment.model;
 public enum Status {
     CREATED,
     CONFIRMED,
-    CANCELED
+    CANCELED,
+    CONFIRMED_WAITING_INTEGRATION
 }
