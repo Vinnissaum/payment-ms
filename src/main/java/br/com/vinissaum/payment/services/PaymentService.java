@@ -1,6 +1,7 @@
 package br.com.vinissaum.payment.services;
 
 import br.com.vinissaum.payment.dto.PaymentDTO;
+import br.com.vinissaum.payment.http.OrderClient;
 import br.com.vinissaum.payment.mapper.PaymentMapper;
 import br.com.vinissaum.payment.model.Payment;
 import br.com.vinissaum.payment.model.Status;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.Optional;
 
 @Service
 public class PaymentService {
@@ -25,10 +27,13 @@ public class PaymentService {
 
     private PaymentMapper paymentMapper;
 
+    private OrderClient orderClient;
+
     @Autowired
-    public PaymentService(PaymentRepository repository, PaymentMapper paymentMapper) {
+    public PaymentService(PaymentRepository repository, PaymentMapper paymentMapper, OrderClient orderClient) {
         this.repository = repository;
         this.paymentMapper = paymentMapper;
+        this.orderClient = orderClient;
     }
 
     public Page<PaymentDTO> findAll(Pageable pageable) {
@@ -67,10 +72,23 @@ public class PaymentService {
         try {
             repository.deleteById(id);
         } catch (EmptyResultDataAccessException | EntityNotFoundException e) {
-            throw new ResourceNotFoundException(String.format("Payment id: %s not found", id));
+            throw new ResourceNotFoundException(String.format("Payment id: %s was not found", id));
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Integrity violation: " + e.getMessage());
         }
+    }
+
+    public void approvePayment(Long id) {
+        Optional<Payment> optionalPayment = repository.findById(id);
+
+        Payment payment = optionalPayment.orElseThrow(() -> new ResourceNotFoundException(String.format
+                ("Payment id: %s was not found", id)
+        ));
+
+        payment.setStatus(Status.CONFIRMED);
+        repository.save(payment);
+
+        orderClient.updatePayment(payment.getOrderId());
     }
 
 }
