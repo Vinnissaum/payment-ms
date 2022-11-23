@@ -1,5 +1,7 @@
 package br.com.vinissaum.payment.amqp;
 
+import org.springframework.amqp.core.Exchange;
+import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -40,6 +42,11 @@ public class PaymentAmqpConfig {
         rabbitTemplate.setMessageConverter(messageConverter);
 
         return rabbitTemplate;
+    }
+
+    @Bean
+    public FanoutExchange fanoutExchange() {
+        return new FanoutExchange("payment.ex");
     }
 
 }

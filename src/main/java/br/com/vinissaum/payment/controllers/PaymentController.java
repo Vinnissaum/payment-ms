@@ -50,7 +50,7 @@ public class PaymentController {
         PaymentDTO paymentDTO = service.createPayment(dto);
         URI uri = uriBuilder.path("/payments/{id").buildAndExpand(paymentDTO.getId()).toUri();
 
-        rabbitTemplate.convertAndSend("payment.successful", paymentDTO);
+        rabbitTemplate.convertAndSend("payment.ex","", paymentDTO);
 
         return ResponseEntity.created(uri).body(paymentDTO);
     }
