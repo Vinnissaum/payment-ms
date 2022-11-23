@@ -3,6 +3,8 @@ package br.com.vinissaum.payment.controllers;
 import br.com.vinissaum.payment.dto.PaymentDTO;
 import br.com.vinissaum.payment.services.PaymentService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,9 +23,12 @@ public class PaymentController {
 
     private PaymentService service;
 
+    private RabbitTemplate rabbitTemplate;
+
     @Autowired
-    public PaymentController(PaymentService service) {
+    public PaymentController(PaymentService service, RabbitTemplate rabbitTemplate) {
         this.service = service;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @GetMapping
@@ -44,6 +49,9 @@ public class PaymentController {
     public ResponseEntity<PaymentDTO> create(@RequestBody @Valid PaymentDTO dto, UriComponentsBuilder uriBuilder) {
         PaymentDTO paymentDTO = service.createPayment(dto);
         URI uri = uriBuilder.path("/payments/{id").buildAndExpand(paymentDTO.getId()).toUri();
+
+        Message message = new Message(("Payment created with id" + paymentDTO.getId()).getBytes());
+        rabbitTemplate.send("payment.successful", message);
 
         return ResponseEntity.created(uri).body(paymentDTO);
     }
