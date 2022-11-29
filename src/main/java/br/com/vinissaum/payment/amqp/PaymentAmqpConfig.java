@@ -1,6 +1,5 @@
 package br.com.vinissaum.payment.amqp;
 
-import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;

@@ -3,7 +3,6 @@ package br.com.vinissaum.payment.controllers;
 import br.com.vinissaum.payment.dto.PaymentDTO;
 import br.com.vinissaum.payment.services.PaymentService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -75,7 +74,7 @@ public class PaymentController {
         service.approvePayment(id);
     }
 
-    public void updateOrderWaitingIntegration(Long id, Exception e) {
+    public void updateOrderWaitingIntegration(Long id) {
         service.changeStatus(id);
     }
 
